@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADAM AI - Maths</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet">
+
+<style>
+body {
+    margin: 0;
+    background: #000;
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    overflow: hidden;
+}
+
+/* CENTER GLASS */
+.center {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.glass {
+    padding: 30px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255,255,255,0.2);
+    text-align: center;
+    width: 300px;
+}
+
+/* INPUT */
+input {
+    width: 80%;
+    padding: 10px;
+    border-radius: 20px;
+    border: none;
+    text-align: center;
+    background: rgba(255,255,255,0.1);
+    color: white;
+}
+
+/* BUTTON */
+.btn, .option {
+    margin-top: 15px;
+    padding: 10px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.05);
+    transition: 0.3s;
+}
+
+.option:hover, .btn:hover {
+    background: white;
+    color: black;
+    transform: scale(1.1);
+}
+
+/* HIDE */
+.hidden { display: none; }
+
+/* CANVAS */
+canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -1;
+}
+</style>
+</head>
+
+<body>
+
+<div class="center">
+
+<!-- INTRO -->
+<div id="intro" class="glass">
+    <h2>Hey! I'm Adam</h2>
+    <input id="username" placeholder="Enter your name">
+    <div class="btn" onclick="start()">START 🚀</div>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz" class="glass hidden">
+    <h3 id="question"></h3>
+    <div id="options"></div>
+</div>
+
+<!-- RESULT -->
+<div id="result" class="glass hidden">
+    <h2>Your Score: <span id="score"></span></h2>
+    <div class="btn" onclick="showLeaderboard()">View Leaderboard</div>
+</div>
+
+<!-- LEADERBOARD -->
+<div id="leaderboard" class="glass hidden">
+    <h2>🏆 Leaderboard</h2>
+    <div id="list"></div>
+    <div class="btn" onclick="location.reload()">Restart</div>
+</div>
+
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+
+/* QUESTIONS */
+const questions = [
+    {q:"5 + 7 = ?", options:[10,11,12,13], answer:12},
+    {q:"9 × 3 = ?", options:[18,27,21,24], answer:27},
+    {q:"15 - 6 = ?", options:[9,7,8,10], answer:9},
+    {q:"12 ÷ 4 = ?", options:[2,3,4,6], answer:3},
+    {q:"7 × 6 = ?", options:[36,42,40,48], answer:42}
+];
+
+let index = 0;
+let score = 0;
+let username = "";
+
+/* START */
+function start(){
+    username = document.getElementById("username").value;
+
+    if(username.trim()==""){
+        alert("Enter name 😏");
+        return;
+    }
+
+    document.getElementById("intro").classList.add("hidden");
+    document.getElementById("quiz").classList.remove("hidden");
+
+    loadQuestion();
+}
+
+/* LOAD QUESTION */
+function loadQuestion(){
+    let q = questions[index];
+    document.getElementById("question").innerText = q.q;
+
+    let optDiv = document.getElementById("options");
+    optDiv.innerHTML = "";
+
+    q.options.forEach(opt=>{
+        let btn = document.createElement("div");
+        btn.className="option";
+        btn.innerText=opt;
+        btn.onclick=()=>check(opt);
+        optDiv.appendChild(btn);
+    });
+}
+
+/* CHECK ANSWER */
+function check(ans){
+    if(ans === questions[index].answer){
+        score += 10;
+    }
+
+    index++;
+
+    if(index < questions.length){
+        loadQuestion();
+    } else {
+        finish();
+    }
+}
+
+/* FINISH */
+function finish(){
+    document.getElementById("quiz").classList.add("hidden");
+    document.getElementById("result").classList.remove("hidden");
+    document.getElementById("score").innerText = score;
+
+    saveScore();
+}
+
+/* SAVE SCORE */
+function saveScore(){
+    let data = JSON.parse(localStorage.getItem("leaderboard")) || [];
+
+    data.push({name: username, score: score});
+
+    data.sort((a,b)=>b.score-a.score);
+
+    localStorage.setItem("leaderboard", JSON.stringify(data));
+}
+
+/* SHOW LEADERBOARD */
+function showLeaderboard(){
+    document.getElementById("result").classList.add("hidden");
+    document.getElementById("leaderboard").classList.remove("hidden");
+
+    let data = JSON.parse(localStorage.getItem("leaderboard")) || [];
+    let list = document.getElementById("list");
+
+    list.innerHTML = "";
+
+    data.slice(0,10).forEach((u,i)=>{
+        let div = document.createElement("div");
+        div.innerText = (i+1) + ". " + u.name + " - " + u.score;
+        list.appendChild(div);
+    });
+}
+
+/* BACKGROUND LINES */
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+canvas.width = innerWidth;
+canvas.height = innerHeight;
+
+let lines = [];
+
+for(let i=0;i<40;i++){
+    lines.push({
+        x:Math.random()*canvas.width,
+        y:Math.random()*canvas.height,
+        length:Math.random()*100+50,
+        angle:Math.random()*Math.PI,
+        speed:(Math.random()-0.5)*0.01,
+        moveX:(Math.random()-0.5)*0.5,
+        moveY:(Math.random()-0.5)*0.5
+    });
+}
+
+function animate(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    lines.forEach(l=>{
+        l.angle+=l.speed;
+        l.x+=l.moveX;
+        l.y+=l.moveY;
+
+        if(l.x<0||l.x>canvas.width) l.moveX*=-1;
+        if(l.y<0||l.y>canvas.height) l.moveY*=-1;
+
+        let x2=l.x+Math.cos(l.angle)*l.length;
+        let y2=l.y+Math.sin(l.angle)*l.length;
+
+        ctx.strokeStyle="rgba(255,255,255,0.2)";
+        ctx.beginPath();
+        ctx.moveTo(l.x,l.y);
+        ctx.lineTo(x2,y2);
+        ctx.stroke();
+    });
+
+    requestAnimationFrame(animate);
+}
+
+animate();
+
+</script>
+
+</body>
+</html>
